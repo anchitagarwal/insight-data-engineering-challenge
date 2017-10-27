@@ -36,6 +36,41 @@ class zip_node:
 		"""
 		return x.__key() == y.__key()
 
+class date_node:
+	"""
+	Date node data structure for maintaining recipient by date
+	"""
+	def __init__(self, cmte_id, txn_datetime):
+		"""
+		Init method for this class
+		"""
+		self.cmte_id = cmte_id
+		self.txn_datetime = txn_datetime
+
+	def __key(self):
+		"""
+		Method that returns tuple for this class for hash computation
+		"""
+		return (self.cmte_id, self.txn_datetime)
+
+	def __hash__(self):
+		"""
+		Method that returns the hash for every object
+		"""
+		return hash(self.__key())
+
+	def __eq__(x, y):
+		"""
+		Method that further checks if two hashes are equal
+
+		Args:
+			x: zip_node object 1
+			y: zip_node object 2
+
+		Returns True if equal.
+		"""
+		return x.__key() == y.__key()
+
 class find_political_donors:
 	def __init__(self, OUTPUT_FILE_ZIP, OUTPUT_FILE_DATE):
 		"""
@@ -55,7 +90,7 @@ class find_political_donors:
 		# dict to store recipient ID and transaction date
 		self.date_dict = {}
 
-	def running_median_zip(self, min_heap, max_heap, val):
+	def running_median(self, min_heap, max_heap, val):
 		"""
 		This method utilizes two heaps to maintain a running median.
 		The idea is to maintain a max_heap with values less than or equal to the current median and
@@ -95,7 +130,7 @@ class find_political_donors:
 			if len(min_heap) != len(max_heap):
 				median = min_heap[0] if len(min_heap) > len(max_heap) else max_heap[0]
 			else:
-				median = (min_heap[0] + max_heap[0]) / 2
+				median = int(round((min_heap[0] + max_heap[0]) / 2))
 
 			# if the new value is less than current median, push it to max_heap
 			if val <= median:
@@ -115,7 +150,7 @@ class find_political_donors:
 			if len(min_heap) != len(max_heap):
 				new_median = min_heap[0] if len(min_heap) > len(max_heap) else max_heap[0]
 			else:
-				new_median = (min_heap[0] + max_heap[0]) / 2
+				new_median = int(round((min_heap[0] + max_heap[0]) / 2))
 
 			return min_heap, max_heap, new_median
 
@@ -133,19 +168,18 @@ class find_political_donors:
 		"""
 		# create a new zip node object
 		obj = zip_node(cmte_id, zip_code)
-		# zip_hash = obj.hash()
 
 		median = -1
 		# core functionality of the method
 		# calculates running median for every recipient,zip pair by maintaining 2 heaps
 		if not self.zip_dict.has_key(obj):
-			min_heap, max_heap, median = self.running_median_zip([], [], txn_amount)
+			min_heap, max_heap, median = self.running_median([], [], txn_amount)
 			self.zip_dict[obj] = [txn_amount, min_heap, max_heap]
 		else:
 			total_amount = self.zip_dict[obj][0] + txn_amount
 			min_heap = self.zip_dict[obj][1]
 			max_heap = self.zip_dict[obj][2]
-			min_heap, max_heap, median = self.running_median_zip(min_heap, max_heap, txn_amount)
+			min_heap, max_heap, median = self.running_median(min_heap, max_heap, txn_amount)
 			self.zip_dict[obj] = [total_amount, min_heap, max_heap]
 
 		# print cmte_id, zip_code, min_heap, max_heap, median
@@ -159,11 +193,33 @@ class find_political_donors:
 			line_out = '|'.join([cmte_id, zip_code, str(median), str(count), str(amount)])
 			outfile.write(line_out + '\n')
 
-	def calculate_median_by_date(self, cmte_id, txn_date, txn_amount):
+	def calculate_median_by_date(self, cmte_id, txn_datetime, txn_amount):
 		"""
+		Method that calculates the running median for a recipient on a given date.
+		Logs the information to the output file `OUTPUT_FILE_DATE`
 
+		Args:
+			cmte_id: String, recipient ID
+			txn_datetime: Datetime, transaction date
+			txn_amount: int, contribution amount
+
+		Nothing returned.
 		"""
-		pass
+		# create a new date_node object
+		obj = date_node(cmte_id, txn_datetime)
+
+		median = -1
+		# core functionality of the method
+		# calculates running median for every recipient for a specific date (2 heaps method)
+		if not self.date_dict.has_key(obj):
+			min_heap, max_heap, median = self.running_median([], [], txn_amount)
+			self.date_dict[obj] = [txn_amount, min_heap, max_heap, median]
+		else:
+			total_amount = self.date_dict[obj][0] + txn_amount
+			min_heap = self.date_dict[obj][1]
+			max_heap = self.date_dict[obj][2]
+			min_heap, max_heap, median = self.running_median(min_heap, max_heap, txn_amount)
+			self.date_dict[obj] = [total_amount, min_heap, max_heap, median]
 	
 	def parse_line(self, line):
 		"""
@@ -202,8 +258,32 @@ class find_political_donors:
 				self.calculate_median_by_zip(cmte_id, zip_code, int(txn_amount))
 
 			# if transaction date is valid, calculate median and write to output file 2 (by_date)
-			# if TXN_DATE_ISVALID:
-			# 	calculate_median_by_date(cmte_id, zip_code, txn_amount)
+			if self.TXN_DATE_ISVALID:
+				self.calculate_median_by_date(cmte_id, txn_datetime, int(txn_amount))
+
+	def write_medianvals_by_date(self):
+		"""
+		Method that writes the analyzed results to OUTPUT_FILE_DATE for every recipient per date
+		"""
+		# sort the date dictionary by CMTE_ID and transaction date
+		d_dict = self.date_dict
+		d_dict = sorted(d_dict.iteritems(), key=lambda x: (x[0].cmte_id, x[0].txn_datetime))
+
+		# write the information to output file
+		with open(self.OUTPUT_FILE_DATE, 'a+') as outfile:
+			for entry in d_dict:
+				# extract information from the sorted dictionary
+				cmte_id = entry[0].cmte_id
+				month = str(entry[0].txn_datetime.month)
+				day = str(entry[0].txn_datetime.day)
+				year = str(entry[0].txn_datetime.year)
+				txn_date =  month + day + year
+				median = str(entry[1][3])
+				count = str(len(entry[1][1]) + len(entry[1][2]))
+				total_amount = str(entry[1][0])
+
+				line_out = '|'.join([cmte_id, txn_date, median, count, total_amount])
+				outfile.write(line_out + '\n')
 
 def main(argv):
 	"""
@@ -244,6 +324,8 @@ def main(argv):
 	with open(INPUT_FILE, 'r') as infile:
 		for line in infile:
 			fpd.parse_line(line)
+	# call the below method to write the output file for medianvals by date
+	fpd.write_medianvals_by_date()
 
 if __name__ == '__main__':
 	if len(sys.argv) == 1:
