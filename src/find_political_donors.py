@@ -122,7 +122,7 @@ class find_political_donors:
 				tmp = min_heap
 				min_heap = max_heap
 				max_heap = tmp
-			return min_heap, max_heap, ((min_heap[0] + max_heap[0]) / 2)
+			return min_heap, max_heap, int(round((min_heap[0] + max_heap[0]) / 2.))
 
 		else:
 			# it's ok to set median as -1 for default as donations cannot be negative
@@ -130,7 +130,7 @@ class find_political_donors:
 			if len(min_heap) != len(max_heap):
 				median = min_heap[0] if len(min_heap) > len(max_heap) else max_heap[0]
 			else:
-				median = int(round((min_heap[0] + max_heap[0]) / 2))
+				median = int(round((min_heap[0] + max_heap[0]) / 2.))
 
 			# if the new value is less than current median, push it to max_heap
 			if val <= median:
@@ -150,7 +150,7 @@ class find_political_donors:
 			if len(min_heap) != len(max_heap):
 				new_median = min_heap[0] if len(min_heap) > len(max_heap) else max_heap[0]
 			else:
-				new_median = int(round((min_heap[0] + max_heap[0]) / 2))
+				new_median = int(round((min_heap[0] + max_heap[0]) / 2.))
 
 			return min_heap, max_heap, new_median
 
@@ -168,6 +168,10 @@ class find_political_donors:
 		"""
 		# create a new zip node object
 		obj = zip_node(cmte_id, zip_code)
+
+		if cmte_id == 'C00384818':
+			import pdb
+			pdb.set_trace()
 
 		median = -1
 		# core functionality of the method
