@@ -169,10 +169,6 @@ class find_political_donors:
 		# create a new zip node object
 		obj = zip_node(cmte_id, zip_code)
 
-		if cmte_id == 'C00384818':
-			import pdb
-			pdb.set_trace()
-
 		median = -1
 		# core functionality of the method
 		# calculates running median for every recipient,zip pair by maintaining 2 heaps
