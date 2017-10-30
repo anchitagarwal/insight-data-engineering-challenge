@@ -40,18 +40,18 @@ class date_node:
 	"""
 	Date node data structure for maintaining recipient by date
 	"""
-	def __init__(self, cmte_id, txn_datetime):
+	def __init__(self, cmte_id, txn_date):
 		"""
 		Init method for this class
 		"""
 		self.cmte_id = cmte_id
-		self.txn_datetime = txn_datetime
+		self.txn_date = txn_date
 
 	def __key(self):
 		"""
 		Method that returns tuple for this class for hash computation
 		"""
-		return (self.cmte_id, self.txn_datetime)
+		return (self.cmte_id, self.txn_date)
 
 	def __hash__(self):
 		"""
@@ -111,46 +111,46 @@ class find_political_donors:
 		"""
 		# if both heaps are empty, insert the current value to min_heap
 		if len(min_heap) == 0 and len(max_heap) == 0:
-			push(max_heap, val)
+			push(max_heap, -1 * val)
 			return min_heap, max_heap, val
 
-		# while inserting second element, insert it to the max_heap
+		# while inserting second element, insert it to the min_heap
 		# swap heaps if min_heap[0] > max_heap[0]
 		elif len(max_heap) == 1 and len(min_heap) == 0:
 			push(min_heap, val)
-			if max_heap[0] > min_heap[0]:
-				tmp = min_heap
-				min_heap = max_heap
-				max_heap = tmp
-			return min_heap, max_heap, int(round((min_heap[0] + max_heap[0]) / 2.))
+			if (-1 * max_heap[0]) > min_heap[0]:
+				tmp = min_heap[0]
+				min_heap[0] = max_heap[0] * -1
+				max_heap[0] = tmp * -1
+			return min_heap, max_heap, int(round((min_heap[0] + max_heap[0] * -1) / 2.))
 
 		else:
 			# it's ok to set median as -1 for default as donations cannot be negative
 			median = -1
 			if len(min_heap) != len(max_heap):
-				median = min_heap[0] if len(min_heap) > len(max_heap) else max_heap[0]
+				median = min_heap[0] if len(min_heap) > len(max_heap) else (max_heap[0] * -1)
 			else:
-				median = int(round((min_heap[0] + max_heap[0]) / 2.))
+				median = int(round((min_heap[0] + max_heap[0] * -1) / 2.))
 
 			# if the new value is less than current median, push it to max_heap
 			if val <= median:
-				push(max_heap, val)
+				push(max_heap, -1 * val)
 			else:
 				push(min_heap, val)
 
 			# if size of both heaps differ by more than 1, balance the heaps
 			if abs(len(min_heap) - len(max_heap)) > 1:
 				if len(min_heap) > len(max_heap):
-					push(max_heap, pop(min_heap))
+					push(max_heap, pop(min_heap) * -1)
 				else:
-					push(min_heap, pop(max_heap))
+					push(min_heap, pop(max_heap) * -1)
 
 			# calculate the new median and return it with updated heaps
 			new_median = -1
 			if len(min_heap) != len(max_heap):
-				new_median = min_heap[0] if len(min_heap) > len(max_heap) else max_heap[0]
+				new_median = min_heap[0] if len(min_heap) > len(max_heap) else (max_heap[0] * -1)
 			else:
-				new_median = int(round((min_heap[0] + max_heap[0]) / 2.))
+				new_median = int(round((min_heap[0] + max_heap[0] * -1) / 2.))
 
 			return min_heap, max_heap, new_median
 
@@ -193,20 +193,20 @@ class find_political_donors:
 			line_out = '|'.join([cmte_id, zip_code, str(median), str(count), str(amount)])
 			outfile.write(line_out + '\n')
 
-	def calculate_median_by_date(self, cmte_id, txn_datetime, txn_amount):
+	def calculate_median_by_date(self, cmte_id, txn_date, txn_amount):
 		"""
 		Method that calculates the running median for a recipient on a given date.
 		Logs the information to the output file `OUTPUT_FILE_DATE`
 
 		Args:
 			cmte_id: String, recipient ID
-			txn_datetime: Datetime, transaction date
+			txn_date: String, transaction date
 			txn_amount: int, contribution amount
 
 		Nothing returned.
 		"""
 		# create a new date_node object
-		obj = date_node(cmte_id, txn_datetime)
+		obj = date_node(cmte_id, txn_date)
 
 		median = -1
 		# core functionality of the method
@@ -259,7 +259,7 @@ class find_political_donors:
 
 			# if transaction date is valid, calculate median and write to output file 2 (by_date)
 			if self.TXN_DATE_ISVALID:
-				self.calculate_median_by_date(cmte_id, txn_datetime, int(txn_amount))
+				self.calculate_median_by_date(cmte_id, txn_date, int(txn_amount))
 
 	def write_medianvals_by_date(self):
 		"""
@@ -267,17 +267,14 @@ class find_political_donors:
 		"""
 		# sort the date dictionary by CMTE_ID and transaction date
 		d_dict = self.date_dict
-		d_dict = sorted(d_dict.iteritems(), key=lambda x: (x[0].cmte_id, x[0].txn_datetime))
+		d_dict = sorted(d_dict.iteritems(), key=lambda x: (x[0].cmte_id, x[0].txn_date))
 
 		# write the information to output file
 		with open(self.OUTPUT_FILE_DATE, 'a+') as outfile:
 			for entry in d_dict:
 				# extract information from the sorted dictionary
 				cmte_id = entry[0].cmte_id
-				month = str(entry[0].txn_datetime.month)
-				day = str(entry[0].txn_datetime.day)
-				year = str(entry[0].txn_datetime.year)
-				txn_date =  month + day + year
+				txn_date =  entry[0].txn_date
 				median = str(entry[1][3])
 				count = str(len(entry[1][1]) + len(entry[1][2]))
 				total_amount = str(entry[1][0])
