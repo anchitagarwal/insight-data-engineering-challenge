@@ -323,7 +323,7 @@ def main(argv):
 	# delete output files if they already exist
 	if os.path.isfile(OUTPUT_FILE_ZIP):
 		os.remove(OUTPUT_FILE_ZIP)
-	if os.path.isFile(OUTPUT_FILE_DATE):
+	if os.path.isfile(OUTPUT_FILE_DATE):
 		os.remove(OUTPUT_FILE_DATE)
 
 	# call the analytics method
