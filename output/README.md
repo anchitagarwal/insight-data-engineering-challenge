@@ -1,1 +1,1 @@
-Directory that contains the output files.
+Directory containing the output files.

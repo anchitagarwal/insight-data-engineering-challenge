@@ -1,4 +1,5 @@
 import sys, getopt, datetime
+import os.path
 from heapq import heappush as push, heappop as pop
 
 class zip_node:
@@ -240,7 +241,9 @@ class find_political_donors:
 				self.ZIP_ISVALID = True
 
 			# validate TRANSACTION_DT
-			if len(txn_date) == 8:
+			if len(txn_date) != 8:
+				self.TXN_DATE_ISVALID = False
+			else:
 				month = int(txn_date[:2])
 				day = int(txn_date[2:4])
 				year = int(txn_date[4:])
@@ -297,13 +300,14 @@ def main(argv):
 	try:
 		(options, args) = getopt.getopt(argv, "h:i:z:d:", ["in=", "out1=", "out2="])
 	except getopt.GetoptError as err:
-		print err
-		print 'find_political_donors.py -i <inputfile> -z <outputfile_zip> -d <outputfile_date>'
+		print '\nHow to run:\n'
+		print 'python ./src/find_political_donors.py -i <inputfile> -z <outputfile_zip> -d <outputfile_date>\n'
 		sys.exit(2)
 
 	for option, arg in options:
 		if option == '-h':
-			print 'find_political_donors.py -i <inputfile> -z <outputfile_zip> -d <outputfile_date>'
+			print '\nHow to run:\n'
+			print 'python ./src/find_political_donors.py -i <inputfile> -z <outputfile_zip> -d <outputfile_date>\n'
 			sys.exit()
 		elif option in ('-i', '--in'):
 			INPUT_FILE = arg
@@ -316,6 +320,12 @@ def main(argv):
 	print 'Output file (zip) is ', OUTPUT_FILE_ZIP
 	print 'Output file (date) is ', OUTPUT_FILE_DATE
 
+	# delete output files if they already exist
+	if os.path.isfile(OUTPUT_FILE_ZIP):
+		os.remove(OUTPUT_FILE_ZIP)
+	if os.path.isFile(OUTPUT_FILE_DATE):
+		os.remove(OUTPUT_FILE_DATE)
+
 	# call the analytics method
 	fpd = find_political_donors(OUTPUT_FILE_ZIP, OUTPUT_FILE_DATE)
 	with open(INPUT_FILE, 'r') as infile:
@@ -323,6 +333,10 @@ def main(argv):
 			fpd.parse_line(line)
 	# call the below method to write the output file for medianvals by date
 	fpd.write_medianvals_by_date()
+
+	# check if OUTPUT_FILE_ZIP exists or not, if not, create an empty file
+	if not os.path.isfile(OUTPUT_FILE_ZIP):
+		open(OUTPUT_FILE_ZIP, 'a').close()
 
 if __name__ == '__main__':
 	if len(sys.argv) == 1:
