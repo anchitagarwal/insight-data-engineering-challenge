@@ -10,13 +10,13 @@ The following sections provide information about approach, prerequisites and run
 
 For this project, I have created a single data processing file, ```./src/find_political_donors.py``` 
 that does all the lifting. Input and output file locations are passed in the command line arguments. See 
-Run Instructions for detailed steps. When the project is initiated,
+Running Instructions for detailed steps. When the project is initiated,
 1. The program starts processing political donations data from the input file.
 2. As each donor's information arrives, the program parses the data and validates it under input constraints.
 3. Algorithm overview:
-		a. The information is processed by maintaining two Hash Maps, one for processing data by zip codes and another by transaction dates.
-		b. Each pair of ```(CMTE_ID, ZIP_CODE)``` and ```(CMTE_ID, TXN_DATE)``` maintains a min heap and max heap for calculation of running medians.
-		c Processed output is written in the output files.
+	* The information is processed by maintaining two Hash Maps, one for processing data by zip codes and another by transaction dates.
+	* Each pair of ```(CMTE_ID, ZIP_CODE)``` and ```(CMTE_ID, TXN_DATE)``` maintains a min heap and max heap for calculation of running medians.
+	* Processed output is written in the output files.
 4. Batch processing can improve processing, but as mentioned in the challenge, the program should be capable of handling online data. Hence, I went with
 processing data by one line at a time.
 
