@@ -109,6 +109,7 @@ class find_political_donors:
 		Returns:
 			min_heap: Update min heap after new value
 			max_heap: Updated max heap after new value
+			median: Updated median
 		"""
 		# if both heaps are empty, insert the current value to min_heap
 		if len(min_heap) == 0 and len(max_heap) == 0:
