@@ -287,7 +287,7 @@ class find_political_donors:
 
 def main(argv):
 	"""
-	Main method that handles the input arguments are call the appropriate function.
+	Main method that handles the input arguments and call the appropriate function.
 
 	Input:
 		argv: command line arguments
